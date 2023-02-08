@@ -6,7 +6,9 @@ const resolvers = {
     countUsers: async (_, args, context) => {
       const { db } = context
       await db.connect()
-      return User.collection.countDocuments()
+      const users = await User.collection.countDocuments()
+      await db.disconnect()
+      return users
     }
   }
 }
