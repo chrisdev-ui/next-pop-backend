@@ -8,9 +8,11 @@ import * as dotenv from 'dotenv'
 import express from 'express'
 import http from 'http'
 import { getSession } from 'next-auth/react'
-import db from '../src/db.js'
+import db from '../src/db/index.js'
 import resolvers from './graphql/resolvers/index.js'
 import typeDefs from './graphql/typeDefs/index.js'
+
+const { connectDB, disconnectDB } = db
 
 async function main() {
   dotenv.config()
@@ -23,8 +25,7 @@ async function main() {
     cache: 'bounded',
     context: async ({ req, res }) => {
       const session = await getSession({ req })
-      console.log('CONTEXT SESSION', session)
-      return { session, db }
+      return { session, db: connectDB() }
     },
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -45,3 +46,15 @@ async function main() {
 }
 
 main().catch((err) => console.log(err))
+
+process.on('SIGTERM', () => {
+  console.log('Database connection closed')
+  disconnectDB()
+  process.exit(0)
+})
+
+process.on('SIGINT', () => {
+  console.log('Database connection closed')
+  disconnectDB()
+  process.exit(0)
+})
