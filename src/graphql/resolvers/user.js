@@ -1,13 +1,15 @@
+import { GraphQLError } from 'graphql'
 import User from '../../db/models/User.js'
 
 const resolvers = {
   Query: {
-    hello: () => 'Hello, world!',
-    countUsers: async (_, args, { db }) => {
+    getUserByEmail: async (_, { email }) => {
       try {
-        return await User.collection.countDocuments()
+        return await User.findOne({ email })
       } catch (error) {
-        throw new Error(`Error counting users: ${error}`)
+        throw new GraphQLError("Can't retrieve user from database", {
+          extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
+        })
       }
     }
   }
