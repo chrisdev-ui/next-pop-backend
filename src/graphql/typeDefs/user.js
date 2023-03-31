@@ -10,8 +10,25 @@ const typeDefs = gql`
     isAdmin: Boolean!
   }
 
+  type AuthorizedUser {
+    _id: ID!
+    name: String!
+    email: String!
+    profilePicture: String
+    isAdmin: Boolean!
+  }
+
+  type AuthenticationPayload {
+    user: AuthorizedUser
+    error: String
+  }
+
   type Query {
     getUserByEmail(email: String!): User
+  }
+
+  type Mutation {
+    login(email: String!, password: String!): AuthenticationPayload
   }
 `
 export default typeDefs
