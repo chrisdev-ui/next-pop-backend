@@ -11,6 +11,15 @@ const resolvers = {
           extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
         })
       }
+    },
+    getProductBySlug: async (_, { slug }) => {
+      try {
+        return (await Product.findOne({ slug })) ?? null
+      } catch (error) {
+        throw new GraphQLError('Can not find product in the database', {
+          extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
+        })
+      }
     }
   }
 }
