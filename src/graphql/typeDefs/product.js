@@ -19,6 +19,7 @@ const typeDefs = gql`
 
   type Query {
     getAllProducts: [Product!]!
+    getProductBySlug(slug: String!): Product
   }
 `
 export default typeDefs
