@@ -20,6 +20,16 @@ const resolvers = {
           extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
         })
       }
+    },
+    getProductStockCount: async (_, { id }) => {
+      try {
+        const product = await Product.findById(id)
+        return product.countInStock || 0
+      } catch (error) {
+        throw new GraphQLError('Can not find product in the database', {
+          extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
+        })
+      }
     }
   }
 }

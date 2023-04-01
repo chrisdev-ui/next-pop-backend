@@ -20,6 +20,7 @@ const typeDefs = gql`
   type Query {
     getAllProducts: [Product!]!
     getProductBySlug(slug: String!): Product
+    getProductStockCount(id: ID!): Int!
   }
 `
 export default typeDefs
