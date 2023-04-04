@@ -5,8 +5,9 @@ function generateOrderNumber() {
   const year = date.getFullYear().toString().padStart(4, '0')
   const month = (date.getMonth() + 1).toString().padStart(2, '0')
   const day = date.getDate().toString().padStart(2, '0')
-  const shortUid = generateShortUid(5)
-  const orderNumber = `${year}${month}${day}${shortUid}`
+  const timestamp = date.getTime().toString().substring(10, 14)
+  const shortUid = generateShortUid(4)
+  const orderNumber = `${year}${month}${day}${timestamp}${shortUid}`
   return orderNumber
 }
 
