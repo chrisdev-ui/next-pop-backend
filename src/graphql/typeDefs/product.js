@@ -15,6 +15,8 @@ const typeDefs = gql`
     numReviews: Int!
     countInStock: Int!
     description: String!
+    createdAt: Date!
+    updatedAt: Date!
   }
 
   type Query {

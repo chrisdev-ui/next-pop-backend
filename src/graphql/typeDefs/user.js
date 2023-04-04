@@ -8,6 +8,8 @@ const typeDefs = gql`
     password: String!
     profilePicture: String
     isAdmin: Boolean!
+    createdAt: Date!
+    updatedAt: Date!
   }
 
   type AuthorizedUser {
