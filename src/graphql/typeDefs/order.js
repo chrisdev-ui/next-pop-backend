@@ -6,6 +6,7 @@ const typeDefs = gql`
   type Order {
     _id: ID!
     user: User!
+    orderNumber: String!
     orderItems: [OrderItem!]!
     shippingAddress: ShippingAddress!
     paymentMethod: String!
@@ -51,6 +52,10 @@ const typeDefs = gql`
     city: String!
     postalCode: String
     country: String!
+  }
+
+  type Query {
+    getOrderById(id: ID!): Order
   }
 
   type Mutation {

@@ -1,17 +1,27 @@
-import { AuthenticationError } from 'apollo-server-core'
+import { AuthenticationError, ForbiddenError } from 'apollo-server-core'
 import Order from '../../db/models/Order.js'
+import generateOrderNumber from '../utils/generate-order-number.js'
 
 const resolvers = {
+  Query: {
+    getOrderById: async (_, { id }, { session }) => {
+      if (!session) throw new AuthenticationError('User not logged in.')
+      const order = await Order.findById(id)
+      if (order?.user != session?.user._id && !session?.user.isAdmin)
+        throw new ForbiddenError(
+          'You are not authorized to perform this action.'
+        )
+      return order
+    }
+  },
   Mutation: {
     createOrder: async (_, args, { session }) => {
-      try {
-        if (!session) throw new AuthenticationError('User not logged in')
-        return await Order.create({ user: session?.user._id, ...args })
-      } catch (error) {
-        throw new GraphQLError('Cannot create a new order in database', {
-          extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
-        })
-      }
+      if (!session) throw new AuthenticationError('User not logged in')
+      return await Order.create({
+        user: session?.user._id,
+        orderNumber: generateOrderNumber(),
+        ...args
+      })
     }
   }
 }
