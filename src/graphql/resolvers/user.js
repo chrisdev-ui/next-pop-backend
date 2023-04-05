@@ -1,3 +1,4 @@
+import { AuthenticationError } from 'apollo-server-core'
 import bcryptjs from 'bcryptjs'
 import { GraphQLError } from 'graphql'
 import User from '../../db/models/User.js'
@@ -8,9 +9,12 @@ const resolvers = {
       try {
         return await User.findOne({ email })
       } catch (error) {
-        throw new GraphQLError("Can't retrieve user from database", {
-          extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
-        })
+        throw new GraphQLError(
+          `There was an error tryng to retrieve data of user with email = ${email}`,
+          {
+            extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
+          }
+        )
       }
     }
   },
@@ -35,9 +39,7 @@ const resolvers = {
           }
         }
       } catch (error) {
-        throw new GraphQLError("Can't retrieve user from database", {
-          extensions: { code: 'AUTHENTICATION_ERROR' }
-        })
+        throw new AuthenticationError(error)
       }
     }
   }
