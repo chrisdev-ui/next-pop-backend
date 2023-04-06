@@ -1,4 +1,4 @@
-import { AuthenticationError } from 'apollo-server-core'
+import { AuthenticationError, UserInputError } from 'apollo-server-core'
 import bcryptjs from 'bcryptjs'
 import { GraphQLError } from 'graphql'
 import User from '../../db/models/User.js'
@@ -41,6 +41,41 @@ const resolvers = {
       } catch (error) {
         throw new AuthenticationError(error)
       }
+    },
+    registerUser: async (
+      _,
+      { input: { name, email, password, profilePicture, isAdmin } },
+      { session }
+    ) => {
+      const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/i
+      if (
+        !name ||
+        !email ||
+        !emailRegex.test(email) ||
+        !password ||
+        password.trim().length < 5
+      )
+        throw new UserInputError(
+          'Error validating name, email or password from user input'
+        )
+
+      const existingUser = await User.findOne({ email })
+      if (existingUser) throw new UserInputError('Email already in use')
+
+      const checkIfUserIsAdmin = () => {
+        if (session && session.user.isAdmin) {
+          return isAdmin
+        }
+        return false
+      }
+
+      return await User.create({
+        name,
+        email,
+        password: bcryptjs.hashSync(password),
+        profilePicture: profilePicture || '',
+        isAdmin: checkIfUserIsAdmin()
+      })
     }
   }
 }
