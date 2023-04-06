@@ -25,12 +25,21 @@ const typeDefs = gql`
     error: String
   }
 
+  input RegisterUserInput {
+    name: String!
+    email: String!
+    password: String!
+    isAdmin: Boolean
+    profilePicture: String
+  }
+
   type Query {
     getUserByEmail(email: String!): User
   }
 
   type Mutation {
     login(email: String!, password: String!): AuthenticationPayload
+    registerUser(input: RegisterUserInput!): User
   }
 `
 export default typeDefs
