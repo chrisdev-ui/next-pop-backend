@@ -2,6 +2,7 @@ import { gql } from 'apollo-server-core'
 
 const typeDefs = gql`
   scalar Date
+  scalar JSON
 
   type Order {
     _id: ID!
@@ -16,6 +17,7 @@ const typeDefs = gql`
     totalPrice: Float!
     isPaid: Boolean!
     isDelivered: Boolean!
+    paymentResult: PaymentResult
     paidAt: Date
     deliveredAt: Date
     createdAt: Date!
@@ -28,6 +30,32 @@ const typeDefs = gql`
     image: String!
     price: Float!
     slug: String!
+  }
+
+  type PaymentResult {
+    id: ID
+    order: MerchantOrder
+    status: String
+    result: String
+    payer: PayerOrder
+  }
+
+  type MerchantOrder {
+    id: ID
+    type: String
+  }
+
+  type PayerOrder {
+    firstName: String
+    email: String
+    lastName: String
+    phone: String
+    identification: IdentificationPayer
+  }
+
+  type IdentificationPayer {
+    number: String
+    type: String
   }
 
   type ShippingAddress {
@@ -58,6 +86,11 @@ const typeDefs = gql`
     getOrderById(id: ID!): Order
   }
 
+  type Preference {
+    preferenceId: String!
+    initPointUrl: String!
+  }
+
   type Mutation {
     createOrder(
       orderItems: [OrderItemInput!]!
@@ -68,6 +101,7 @@ const typeDefs = gql`
       taxPrice: Float!
       totalPrice: Float!
     ): Order!
+    newPreference(storeOrderId: ID!): Preference
   }
 `
 export default typeDefs
