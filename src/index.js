@@ -9,8 +9,10 @@ import express from 'express'
 import http from 'http'
 import { getSession } from 'next-auth/react'
 import db from '../src/db/index.js'
+import MercadoPago from './controllers/mercadopago-webhook.js'
 import resolvers from './graphql/resolvers/index.js'
 import typeDefs from './graphql/typeDefs/index.js'
+import mercadopago from './services/mercadopago.js'
 
 const { connectDB, disconnectDB } = db
 
@@ -25,7 +27,7 @@ async function main() {
     cache: 'bounded',
     context: async ({ req, res }) => {
       const session = await getSession({ req })
-      return { session, db: connectDB() }
+      return { session, db: connectDB(), mercadopago }
     },
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -40,6 +42,12 @@ async function main() {
     app,
     cors: corsOptions
   })
+
+  app.post(
+    '/webhooks/mercadopago',
+    express.json(),
+    MercadoPago.webhookController
+  )
 
   await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve))
   console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
