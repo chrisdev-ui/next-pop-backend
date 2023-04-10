@@ -20,6 +20,22 @@ const orderSchema = new mongoose.Schema(
       postalCode: { type: String, required: false },
       country: { type: String, required: true, default: 'Colombia' }
     },
+    paymentResult: {
+      id: { type: String },
+      order: { id: { type: String }, type: { type: String } },
+      status: { type: String },
+      result: { type: String },
+      payer: {
+        firstName: String,
+        email: String,
+        lastName: String,
+        phone: String,
+        identification: {
+          number: { type: String },
+          type: { type: String }
+        }
+      }
+    },
     paymentMethod: { type: String, required: true },
     itemsPrice: { type: Number, required: true },
     shippingPrice: { type: Number, required: true },
