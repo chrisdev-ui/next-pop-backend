@@ -5,6 +5,8 @@ import {
 } from 'apollo-server-core'
 import { GraphQLError } from 'graphql'
 import { PAYMENT_METHOD } from '../../config.js'
+import capturePayment from '../../controllers/capture-paypal-order.js'
+import createOrder from '../../controllers/create-paypal-order.js'
 import Order from '../../db/models/Order.js'
 import generateOrderNumber from '../utils/generate-order-number.js'
 
@@ -18,6 +20,11 @@ const resolvers = {
           'You are not authorized to perform this action.'
         )
       return order
+    },
+    paypalClientId: (_, __, { session }) => {
+      if (!session) throw new AuthenticationError('User not logged in.')
+      const { PAYPAL_CLIENT_ID } = process.env
+      return PAYPAL_CLIENT_ID || 'sb'
     }
   },
   Mutation: {
@@ -76,6 +83,71 @@ const resolvers = {
         throw new GraphQLError('Could not create preference', {
           extensions: { code: 'INTERNAL_SERVER_ERROR' }
         })
+      }
+    },
+    createPayPalOrder: async (_, { orderData }, { session }) => {
+      try {
+        if (!session) throw new AuthenticationError('User not logged in')
+        return await createOrder(orderData)
+      } catch (error) {
+        throw new GraphQLError(
+          `Could not create an order in Paypal: ${error.message}`,
+          {
+            extensions: { code: 'INTERNAL_SERVER_ERROR' }
+          }
+        )
+      }
+    },
+    capturePayPalPayment: async (
+      _,
+      { paymentData: { paypalOrderId, orderId } },
+      { session }
+    ) => {
+      try {
+        if (!session) throw new AuthenticationError('User not logged in')
+        const paypalPayment = await capturePayment(paypalOrderId)
+        if (!paypalPayment)
+          throw new GraphQLError('Paypal payment not found', {
+            extensions: { code: 'INTERNAL_SERVER_ERROR' }
+          })
+        const { id, status, payer } = paypalPayment
+        const updatedFields = {
+          isPaid: true,
+          paidAt: Date.now(),
+          paymentResult: {
+            id,
+            order: {},
+            status,
+            result: status === 'COMPLETED' ? 'accredited' : 'pending',
+            payer: {
+              firstName: payer?.name.given_name || '',
+              lastName: payer?.name.surname || '',
+              email: payer?.email_address || '',
+              phone: 'Paypal does not support phone numbers',
+              identification: {}
+            }
+          }
+        }
+        const paidOrder = await Order.findOneAndUpdate(
+          {
+            _id: orderId,
+            isPaid: false
+          },
+          updatedFields,
+          { new: true }
+        )
+        if (!paidOrder)
+          throw new GraphQLError('Order is already paid or does not exist', {
+            extensions: { code: 'INTERNAL_SERVER_ERROR' }
+          })
+        return paidOrder
+      } catch (error) {
+        throw new GraphQLError(
+          `Could not capture order. Cause: ${error.message}`,
+          {
+            extensions: { code: 'INTERNAL_SERVER_ERROR' }
+          }
+        )
       }
     }
   }

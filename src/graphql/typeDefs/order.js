@@ -84,11 +84,34 @@ const typeDefs = gql`
 
   type Query {
     getOrderById(id: ID!): Order
+    paypalClientId: String!
   }
 
   type Preference {
     preferenceId: String!
     initPointUrl: String!
+  }
+
+  input PayPalOrderInput {
+    totalAmount: Float!
+    currencyCode: String!
+  }
+
+  type PayPalLink {
+    href: String
+    rel: String
+    method: String
+  }
+
+  type PayPalOrder {
+    id: ID!
+    status: String
+    links: [PayPalLink!]
+  }
+
+  input capturePaymentInput {
+    paypalOrderId: ID!
+    orderId: ID!
   }
 
   type Mutation {
@@ -102,6 +125,8 @@ const typeDefs = gql`
       totalPrice: Float!
     ): Order!
     newPreference(storeOrderId: ID!): Preference
+    createPayPalOrder(orderData: PayPalOrderInput!): PayPalOrder
+    capturePayPalPayment(paymentData: capturePaymentInput!): Order
   }
 `
 export default typeDefs
