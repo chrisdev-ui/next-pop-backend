@@ -60,7 +60,7 @@ const resolvers = {
             picture_url: image,
             description: `Es un/una ${name} de tipo ${slug}`,
             category_id: 'art',
-            unit_price: price * 100, //Intentar cambiar los precios de los productos a precio COP
+            unit_price: price * 100, // TODO: Intentar cambiar los precios de los productos a precio COP
             quantity: quantity
           })
         ),

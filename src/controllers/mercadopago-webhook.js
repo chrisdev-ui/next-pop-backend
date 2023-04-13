@@ -1,6 +1,6 @@
 import { ApolloError } from 'apollo-server-core'
 import mercadopago from 'mercadopago'
-import { WEBHOOK_TYPE } from '../config.js'
+import { PAYMENT, WEBHOOK_TYPE } from '../config.js'
 import Order from '../db/models/Order.js'
 
 const MercadoPago = {}
@@ -9,9 +9,6 @@ const webhookController = async (req, res) => {
   try {
     const { body, query } = req
     const topic = query.topic || query.type
-    console.log(
-      '******************************** NEW NOTIFICATION ********************************'
-    )
     if (topic === WEBHOOK_TYPE.PAYMENT) {
       const {
         data: { id },
@@ -29,9 +26,13 @@ const webhookController = async (req, res) => {
             payer,
             metadata: { store_order_id: storeOrderId }
           } = payment.body
+
+          const isPaidSuccessfully =
+            status === PAYMENT.approved && statusDetail === PAYMENT.accredited
+
           const updatedFields = {
-            isPaid: true,
-            paidAt: Date.now(),
+            isPaid: isPaidSuccessfully,
+            paidAt: isPaidSuccessfully ? Date.now() : null,
             paymentResult: {
               id: paymentId,
               order,
@@ -54,10 +55,12 @@ const webhookController = async (req, res) => {
               }
             }
           }
+
           await Order.updateOne(
             { _id: storeOrderId, isPaid: false },
             { $set: updatedFields }
           )
+
           break
         }
 

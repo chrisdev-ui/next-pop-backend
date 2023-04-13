@@ -2,6 +2,8 @@ import axios from 'axios'
 import generateAccessToken from '../services/paypal.js'
 // import currencyConverter from '../services/currencyConverter.js'
 
+// TODO: Add currencyConverter in production
+
 const { PAYPAL_API } = process.env
 
 async function createOrder({ totalAmount, currencyCode }) {

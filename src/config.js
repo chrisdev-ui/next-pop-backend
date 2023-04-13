@@ -7,6 +7,11 @@ export const WEBHOOK_TYPE = {
   POINT_INTEGRATION_WH: 'point_integration_wh'
 }
 
+export const PAYMENT = {
+  approved: 'approved',
+  accredited: 'accredited'
+}
+
 // Payment Methods
 export const PAYMENT_METHOD = {
   MERCADOPAGO: 'MercadoPago',
