@@ -111,20 +111,24 @@ const resolvers = {
             extensions: { code: 'INTERNAL_SERVER_ERROR' }
           })
         const { id, status, payer } = paypalPayment
+        const isPaymentCompleted =
+          status === 'COMPLETED' || status === 'APPROVED'
         const updatedFields = {
-          isPaid: true,
-          paidAt: Date.now(),
+          isPaid: isPaymentCompleted,
+          paidAt: isPaymentCompleted ? Date.now() : null,
           paymentResult: {
             id,
             order: {},
             status,
-            result: status === 'COMPLETED' ? 'accredited' : 'pending',
+            result: isPaymentCompleted ? 'accredited' : 'pending',
             payer: {
               firstName: payer?.name.given_name || '',
               lastName: payer?.name.surname || '',
               email: payer?.email_address || '',
               phone: 'Paypal does not support phone numbers',
-              identification: {}
+              identification: {
+                number: `Paypal Payer ID: ${payer.payer_id}`
+              }
             }
           }
         }
