@@ -10,6 +10,7 @@ import http from 'http'
 import { getSession } from 'next-auth/react'
 import db from '../src/db/index.js'
 import MercadoPago from './controllers/mercadopago-webhook.js'
+import Paypal from './controllers/paypal-webhook.js'
 import resolvers from './graphql/resolvers/index.js'
 import typeDefs from './graphql/typeDefs/index.js'
 import mercadopago from './services/mercadopago.js'
@@ -48,6 +49,8 @@ async function main() {
     express.json(),
     MercadoPago.webhookController
   )
+
+  app.post('/webhooks/paypal', express.json(), Paypal.webhookController)
 
   await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve))
   console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
