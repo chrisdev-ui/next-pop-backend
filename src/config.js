@@ -7,6 +7,10 @@ export const WEBHOOK_TYPE = {
   POINT_INTEGRATION_WH: 'point_integration_wh'
 }
 
+export const PAYPAL_WEBHOOK_TYPE = {
+  CHECKOUT_ORDER: 'checkout-order'
+}
+
 export const PAYMENT = {
   approved: 'approved',
   accredited: 'accredited'
