@@ -17,7 +17,7 @@ const webhookController = async (req, res) => {
       switch (type) {
         case WEBHOOK_TYPE.PAYMENT: {
           const payment = await mercadopago.payment.findById(id)
-          if (!payment) throw new ApolloError('Payment not found', '404')
+          if (!payment) throw new ApolloError('Payment not found')
           const {
             id: paymentId,
             order,

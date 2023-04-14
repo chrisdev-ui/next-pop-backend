@@ -14,12 +14,18 @@ const resolvers = {
   Query: {
     getOrderById: async (_, { id }, { session }) => {
       if (!session) throw new AuthenticationError('User not logged in.')
-      const order = await Order.findById(id)
-      if (order?.user != session?.user._id && !session?.user.isAdmin)
-        throw new ForbiddenError(
-          'You are not authorized to perform this action.'
-        )
-      return order
+      try {
+        const order = await Order.findById(id)
+        if (order?.user != session?.user._id && !session?.user.isAdmin)
+          throw new ForbiddenError(
+            'You are not authorized to perform this action.'
+          )
+        return order
+      } catch (error) {
+        throw new GraphQLError('Error while getting order from database', {
+          extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
+        })
+      }
     },
     paypalClientId: (_, __, { session }) => {
       if (!session) throw new AuthenticationError('User not logged in.')
@@ -30,11 +36,17 @@ const resolvers = {
   Mutation: {
     createOrder: async (_, args, { session }) => {
       if (!session) throw new AuthenticationError('User not logged in')
-      return await Order.create({
-        user: session?.user._id,
-        orderNumber: generateOrderNumber(),
-        ...args
-      })
+      try {
+        return await Order.create({
+          user: session?.user._id,
+          orderNumber: generateOrderNumber(),
+          ...args
+        })
+      } catch (error) {
+        throw new GraphQLError('Error while creating order in database', {
+          extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
+        })
+      }
     },
     newPreference: async (_, { storeOrderId }, { session, mercadopago }) => {
       if (!session) throw new AuthenticationError('User not logged in')

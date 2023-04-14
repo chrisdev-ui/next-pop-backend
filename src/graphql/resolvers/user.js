@@ -1,4 +1,8 @@
-import { AuthenticationError, UserInputError } from 'apollo-server-core'
+import {
+  AuthenticationError,
+  UserInputError,
+  ValidationError
+} from 'apollo-server-core'
 import bcryptjs from 'bcryptjs'
 import { GraphQLError } from 'graphql'
 import User from '../../db/models/User.js'
@@ -20,14 +24,16 @@ const resolvers = {
   },
   Mutation: {
     login: async (_, { email, password }) => {
+      if (!email || !password)
+        throw new ValidationError('Email and password are required')
       try {
         const user = await User.findOne({ email })
         if (!user) {
-          return { error: 'email or password does not match with our records' }
+          throw new Error('Email or password does not match with our records')
         }
         const matched = bcryptjs.compareSync(password, user.password)
         if (!matched) {
-          return { error: 'email or password does not match with our records' }
+          throw new Error('Email or password does not match with our records')
         }
         return {
           user: {
@@ -39,7 +45,16 @@ const resolvers = {
           }
         }
       } catch (error) {
-        throw new AuthenticationError(error)
+        if (
+          error.message.includes(
+            'Email or password does not match with our records'
+          )
+        ) {
+          throw new AuthenticationError(
+            'Email or password does not match with our records'
+          )
+        }
+        throw new GraphQLError(error.message)
       }
     },
     registerUser: async (
@@ -62,20 +77,17 @@ const resolvers = {
       const existingUser = await User.findOne({ email })
       if (existingUser) throw new UserInputError('Email already in use')
 
-      const checkIfUserIsAdmin = () => {
-        if (session && session.user.isAdmin) {
-          return isAdmin
-        }
-        return false
+      try {
+        return await User.create({
+          name,
+          email,
+          password: bcryptjs.hashSync(password),
+          profilePicture: profilePicture || '',
+          isAdmin: session && session.user.isAdmin ? isAdmin : false
+        })
+      } catch (error) {
+        throw new GraphQLError(`Error creating user: ${error.message}`)
       }
-
-      return await User.create({
-        name,
-        email,
-        password: bcryptjs.hashSync(password),
-        profilePicture: profilePicture || '',
-        isAdmin: checkIfUserIsAdmin()
-      })
     }
   }
 }
