@@ -21,3 +21,7 @@ export const PAYMENT_METHOD = {
   MERCADOPAGO: 'MercadoPago',
   PAYPAL: 'Paypal'
 }
+
+export const GET_SENDINGS_MP = {
+  pageSizeDefault: 10
+}
