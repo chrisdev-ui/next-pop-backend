@@ -10,10 +10,12 @@ import http from 'http'
 import { getSession } from 'next-auth/react'
 import db from '../src/db/index.js'
 import MercadoPago from './controllers/mercadopago-webhook.js'
+import MiPaqueteController from './controllers/mipaquete-controller.js'
 import Paypal from './controllers/paypal-webhook.js'
 import resolvers from './graphql/resolvers/index.js'
 import typeDefs from './graphql/typeDefs/index.js'
 import mercadopago from './services/mercadopago.js'
+import MiPaquete from './services/mipaquete.js'
 
 const { connectDB, disconnectDB } = db
 
@@ -28,7 +30,7 @@ async function main() {
     cache: 'bounded',
     context: async ({ req, res }) => {
       const session = await getSession({ req })
-      return { session, db: connectDB(), mercadopago }
+      return { session, mercadopago }
     },
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -38,6 +40,7 @@ async function main() {
 
   const corsOptions = { origin: process.env.CLIENT_ORIGIN, credentials: true }
 
+  await MiPaquete.generateApiKey()
   await server.start()
   server.applyMiddleware({
     app,
@@ -52,11 +55,25 @@ async function main() {
 
   app.post('/webhooks/paypal', express.json(), Paypal.webhookController)
 
+  app.post(
+    '/webhooks/mipaquete-states',
+    express.json(),
+    MiPaqueteController.statesWebhookController
+  )
+
+  app.post(
+    '/webhooks/mipaquete-guides',
+    express.json(),
+    MiPaqueteController.guidesWebhookController
+  )
+
   await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve))
   console.log(`🚀 Server ready at http://localhost:4000${server.graphqlPath}`)
 }
 
-main().catch((err) => console.log(err))
+main()
+  .then(async () => await connectDB())
+  .catch((err) => console.log(err))
 
 process.on('SIGTERM', () => {
   console.log('Database connection closed')
