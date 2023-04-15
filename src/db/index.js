@@ -1,25 +1,26 @@
 import * as dotenv from 'dotenv'
 import mongoose from 'mongoose'
 
-let db = null
 dotenv.config() // enable all environment variables
 
+let isConnected = false
+
 const connectDB = async () => {
-  if (!db) {
+  if (!isConnected) {
     mongoose.set('strictQuery', false)
-    db = await mongoose.connect(process.env.MONGODB_URI, {
+    await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true
     })
+    isConnected = true
     console.log('Connected successfully to the MongoDB database')
   }
-  return db
 }
 
 const disconnectDB = async () => {
-  if (db) {
-    await db.disconnect()
-    db = null
+  if (isConnected) {
+    await mongoose.disconnect()
+    isConnected = false
     console.log('Disconnected from the MongoDB database')
   }
 }
