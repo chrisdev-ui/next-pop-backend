@@ -19,7 +19,7 @@ const typeDefs = gql`
     requestPickup: Boolean!
     adminTransactionData: AdminTransactionData
     pickupDate: Date
-    deliverDate: Date
+    deliveryDate: Date
     isCashOnDelivery: Boolean!
     status: String!
     createdAt: Date
@@ -72,6 +72,7 @@ const typeDefs = gql`
     NIT
     CC
     CE
+    TI
   }
 
   type LocationsResponse {

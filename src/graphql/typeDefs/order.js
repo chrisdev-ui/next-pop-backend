@@ -9,7 +9,7 @@ const typeDefs = gql`
     user: User!
     orderNumber: String!
     orderItems: [OrderItem!]!
-    shippingAddress: ShippingAddress!
+    shippingInfo: ShippingInfo!
     paymentMethod: String!
     itemsPrice: Float!
     shippingPrice: Float!
@@ -58,12 +58,18 @@ const typeDefs = gql`
     type: String
   }
 
-  type ShippingAddress {
+  type ShippingInfo {
     fullName: String!
+    cellPhone: String!
     address: String!
     city: String!
-    postalCode: String
+    department: String!
     country: String!
+    nit: String
+    nitType: NitType
+    isCashOnDelivery: Boolean!
+    deliveryCompany: String
+    shippingCost: Float
   }
 
   input OrderItemInput {
@@ -74,12 +80,18 @@ const typeDefs = gql`
     slug: String!
   }
 
-  input ShippingAddressInput {
+  input ShippingInfoInput {
     fullName: String!
+    cellPhone: String!
     address: String!
     city: String!
-    postalCode: String
+    department: String!
     country: String!
+    nit: String
+    nitType: NitType
+    isCashOnDelivery: Boolean
+    deliveryCompany: String
+    shippingCost: Float
   }
 
   type Query {
@@ -117,7 +129,7 @@ const typeDefs = gql`
   type Mutation {
     createOrder(
       orderItems: [OrderItemInput!]!
-      shippingAddress: ShippingAddressInput!
+      shippingInfo: ShippingInfoInput!
       paymentMethod: String!
       itemsPrice: Float!
       shippingPrice: Float!

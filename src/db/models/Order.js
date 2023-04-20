@@ -13,12 +13,21 @@ const orderSchema = new mongoose.Schema(
         slug: { type: String, required: true }
       }
     ],
-    shippingAddress: {
+    shippingInfo: {
       fullName: { type: String, required: true },
+      cellPhone: { type: String, required: true },
       address: { type: String, required: true },
       city: { type: String, required: true },
-      postalCode: { type: String, required: false },
-      country: { type: String, required: true, default: 'Colombia' }
+      department: { type: String, required: true },
+      country: { type: String, required: true, default: 'Colombia' },
+      nit: { type: String },
+      nitType: {
+        type: String,
+        enum: ['NIT', 'CC', 'CE', 'TI']
+      },
+      isCashOnDelivery: { type: Boolean, required: true, default: false },
+      deliveryCompany: { type: String },
+      shippingCost: { type: Number }
     },
     paymentResult: {
       id: { type: String },

@@ -29,7 +29,7 @@ const shipmentSchema = new mongoose.Schema(
       },
       nitType: {
         type: String,
-        enum: ['NIT', 'CC', 'CE'],
+        enum: ['NIT', 'CC', 'CE', 'TI'],
         default: 'CC'
       }
     },
@@ -43,7 +43,7 @@ const shipmentSchema = new mongoose.Schema(
       nit: { type: String },
       nitType: {
         type: String,
-        enum: ['NIT', 'CC', 'CE']
+        enum: ['NIT', 'CC', 'CE', 'TI']
       }
     },
     productInformation: {
@@ -112,7 +112,7 @@ const shipmentSchema = new mongoose.Schema(
       }
     },
     pickupDate: { type: Date },
-    deliverDate: { type: Date },
+    deliveryDate: { type: Date },
     isCashOnDelivery: { type: Boolean, required: true, default: false },
     status: {
       type: String,
