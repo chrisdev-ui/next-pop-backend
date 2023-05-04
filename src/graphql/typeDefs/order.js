@@ -69,7 +69,6 @@ const typeDefs = gql`
     nitType: NitType
     isCashOnDelivery: Boolean!
     deliveryCompany: String
-    shippingCost: Float
   }
 
   input OrderItemInput {
@@ -91,7 +90,6 @@ const typeDefs = gql`
     nitType: NitType
     isCashOnDelivery: Boolean
     deliveryCompany: String
-    shippingCost: Float
   }
 
   type Query {
@@ -105,8 +103,9 @@ const typeDefs = gql`
   }
 
   input PayPalOrderInput {
-    totalAmount: Float!
+    fromCurrencyCode: String!
     currencyCode: String!
+    orderId: ID!
   }
 
   type PayPalLink {

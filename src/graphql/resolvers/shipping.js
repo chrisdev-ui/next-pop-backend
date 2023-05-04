@@ -66,7 +66,10 @@ const resolvers = {
       if (!shipment) throw new UserInputError('Shipment not found')
       const order = await Order.findById(shipment?.order)
       if (!order) throw new UserInputError('Order not found')
-      if (order?.user != session?.user._id && !session?.user.isAdmin)
+      if (
+        order?.user.toString() !== session?.user._id &&
+        !session?.user.isAdmin
+      )
         throw new ForbiddenError(
           'You are not authorized to perform this action.'
         )
@@ -81,7 +84,10 @@ const resolvers = {
       if (!shipment) throw new UserInputError('Shipment not found')
       const order = await Order.findById(shipment?.order)
       if (!order) throw new UserInputError('Order not found')
-      if (order?.user != session?.user._id && !session?.user.isAdmin)
+      if (
+        order?.user.toString() !== session?.user._id &&
+        !session?.user.isAdmin
+      )
         throw new ForbiddenError(
           'You are not authorized to perform this action.'
         )
@@ -166,7 +172,10 @@ const resolvers = {
       if (!shipment) throw new UserInputError('Shipment not found')
       const order = await Order.findById(shipment?.order)
       if (!order) throw new UserInputError('Order not found')
-      if (order?.user != session?.user._id && !session?.user.isAdmin)
+      if (
+        order?.user.toString() !== session?.user._id &&
+        !session?.user.isAdmin
+      )
         throw new ForbiddenError(
           'You are not authorized to perform this action.'
         )

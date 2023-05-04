@@ -26,8 +26,7 @@ const orderSchema = new mongoose.Schema(
         enum: ['NIT', 'CC', 'CE', 'TI']
       },
       isCashOnDelivery: { type: Boolean, required: true, default: false },
-      deliveryCompany: { type: String },
-      shippingCost: { type: Number }
+      deliveryCompany: { type: String }
     },
     paymentResult: {
       id: { type: String },

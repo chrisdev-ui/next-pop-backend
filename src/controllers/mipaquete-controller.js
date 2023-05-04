@@ -5,7 +5,7 @@ const MiPaqueteController = {}
 
 const sessionTracker = uuidv4()
 
-const { MIPAQUETE_API_KEY, MIPAQUETE_API } = process.env
+const { MIPAQUETE_API_KEY, MIPAQUETE_API, NGROK_URL } = process.env
 
 const getHeaders = () => ({
   'session-tracker': sessionTracker,
@@ -269,15 +269,11 @@ MiPaqueteController.createWebHook = async (urlGuides = '', urlStates = '') => {
   const headers = getHeaders()
   const webhooks = {
     urlForGuides: {
-      urlClient:
-        urlGuides ||
-        'https: //1377-181-128-53-84.ngrok-free.app/webhooks/mipaquete-guides',
+      urlClient: urlGuides || `${NGROK_URL}/webhooks/mipaquete-guides`,
       enabled: true
     },
     urlForStates: {
-      urlClient:
-        urlStates ||
-        'https: //1377-181-128-53-84.ngrok-free.app/webhooks/mipaquete-states',
+      urlClient: urlStates || `${NGROK_URL}/webhooks/mipaquete-states`,
       enabled: true
     }
   }

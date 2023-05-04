@@ -1,9 +1,9 @@
 import axios from 'axios'
 import generateAccessToken from '../services/paypal.js'
 
-const { PAYPAL_API } = process.env
+const { PAYPAL_API, NGROK_URL } = process.env
 
-const webhookUrl = 'https://1377-181-128-53-84.ngrok-free.app/webhooks/paypal'
+const webhookUrl = `${NGROK_URL}/webhooks/paypal`
 
 async function createPayPalWebhook() {
   // Get an access token from PayPal

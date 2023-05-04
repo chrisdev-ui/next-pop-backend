@@ -13,7 +13,6 @@ const webhookController = async (req, res) => {
         resource
       }
     } = req
-
     switch (resourceType) {
       case PAYPAL_WEBHOOK_TYPE.CHECKOUT_ORDER: {
         const { id: paymentID, status, payer } = resource
@@ -51,8 +50,9 @@ const webhookController = async (req, res) => {
         break
       }
     }
+    res.status(200).send('Notification received')
   } catch (error) {
-    res.status(error.status).send('Error: ' + error.message)
+    res.status(500).send('Internal Server Error')
   }
 }
 

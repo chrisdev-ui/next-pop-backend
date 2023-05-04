@@ -16,13 +16,16 @@ const resolvers = {
       if (!session) throw new AuthenticationError('User not logged in.')
       try {
         const order = await Order.findById(id)
-        if (order?.user != session?.user._id && !session?.user.isAdmin)
+        if (
+          order?.user.toString() !== session?.user._id &&
+          !session?.user.isAdmin
+        )
           throw new ForbiddenError(
             'You are not authorized to perform this action.'
           )
         return order
       } catch (error) {
-        throw new GraphQLError('Error while getting order from database', {
+        throw new GraphQLError(`${error.message}`, {
           extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' }
         })
       }
@@ -62,6 +65,9 @@ const resolvers = {
           'The order has already been paid',
           'ORDER_ALREADY_PAID'
         )
+      const shouldAddShipmentToPreference =
+        currentOrder.shippingInfo?.deliveryCompany &&
+        !currentOrder.shippingInfo?.isCashOnDelivery
       const preference = {
         metadata: { store_order_id: currentOrder._id },
         items: currentOrder.orderItems.map(
@@ -72,18 +78,23 @@ const resolvers = {
             picture_url: image,
             description: `Es un/una ${name} de tipo ${slug}`,
             category_id: 'art',
-            unit_price: price * 100, // TODO: Intentar cambiar los precios de los productos a precio COP
+            unit_price: price,
             quantity: quantity
           })
         ),
         back_urls: {
-          success: `${process.env.CLIENT_ORIGIN}/order/mercadopago`,
-          failure: `${process.env.CLIENT_ORIGIN}/order/mercadopago`,
-          pending: `${process.env.CLIENT_ORIGIN}/order/mercadopago`
+          success: `${process.env.CLIENT_ORIGIN}/order/${currentOrder._id}`,
+          failure: `${process.env.CLIENT_ORIGIN}/order/${currentOrder._id}`,
+          pending: `${process.env.CLIENT_ORIGIN}/order/${currentOrder._id}`
         },
         auto_return: 'approved',
-        notification_url:
-          'https://1377-181-128-53-84.ngrok-free.app/webhooks/mercadopago'
+        ...(shouldAddShipmentToPreference && {
+          shipments: {
+            mode: 'not_specified',
+            cost: currentOrder.shippingPrice
+          }
+        }),
+        notification_url: `${process.env.NGROK_URL}/webhooks/mercadopago`
       }
       try {
         const response = await mercadopago.preferences.create(preference)
@@ -97,10 +108,37 @@ const resolvers = {
         })
       }
     },
-    createPayPalOrder: async (_, { orderData }, { session }) => {
+    createPayPalOrder: async (
+      _,
+      { orderData: { currencyCode, fromCurrencyCode, orderId } },
+      { session }
+    ) => {
+      if (!session) throw new AuthenticationError('User not logged in')
+      const currentOrder = await Order.findById(orderId)
+      if (!currentOrder) throw new ApolloError('Order not found', 'NOT_FOUND')
+      if (currentOrder.paymentMethod !== PAYMENT_METHOD.PAYPAL)
+        throw new ApolloError(
+          'The payment method of the order is different from the current operation',
+          'PAYMENT_METHOD_MISMATCH'
+        )
+      if (currentOrder.isPaid)
+        throw new ApolloError(
+          'The order has already been paid',
+          'ORDER_ALREADY_PAID'
+        )
+      const shouldAddShipmentToOrder =
+        currentOrder.shippingInfo?.deliveryCompany &&
+        !currentOrder.shippingInfo?.isCashOnDelivery
       try {
-        if (!session) throw new AuthenticationError('User not logged in')
-        return await createOrder(orderData)
+        return await createOrder({
+          orderId: currentOrder._id,
+          orderItems: currentOrder.orderItems,
+          ...(shouldAddShipmentToOrder && {
+            shipmentCost: currentOrder.shippingPrice
+          }),
+          fromCurrencyCode,
+          currencyCode
+        })
       } catch (error) {
         throw new GraphQLError(
           `Could not create an order in Paypal: ${error.message}`,
