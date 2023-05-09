@@ -259,7 +259,6 @@ MiPaqueteController.deleteMyDirections = async (directionIds = []) => {
     const { data } = await axios.delete(url, { headers, data: directionIds })
     return { data }
   } catch (error) {
-    console.error(error)
     return { error: handleError(error) }
   }
 }

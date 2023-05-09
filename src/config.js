@@ -16,10 +16,17 @@ export const PAYMENT = {
   accredited: 'accredited'
 }
 
+export const BANCOLOMBIA_TRANSFER_STATES = {
+  approved: 'approved',
+  rejected: 'rejected',
+  pending: 'pending'
+}
+
 // Payment Methods
 export const PAYMENT_METHOD = {
   MERCADOPAGO: 'MercadoPago',
-  PAYPAL: 'Paypal'
+  PAYPAL: 'Paypal',
+  BOTON_BANCOLOMBIA: 'Botón Bancolombia'
 }
 
 export const GET_SENDINGS_MP = {

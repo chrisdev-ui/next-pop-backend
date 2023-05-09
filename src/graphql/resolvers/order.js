@@ -4,7 +4,8 @@ import {
   ForbiddenError
 } from 'apollo-server-core'
 import { GraphQLError } from 'graphql'
-import { PAYMENT_METHOD } from '../../config.js'
+import { BANCOLOMBIA_TRANSFER_STATES, PAYMENT_METHOD } from '../../config.js'
+import BancolombiaController from '../../controllers/bancolombia-controller.js'
 import capturePayment from '../../controllers/capture-paypal-order.js'
 import createOrder from '../../controllers/create-paypal-order.js'
 import Order from '../../db/models/Order.js'
@@ -34,6 +35,19 @@ const resolvers = {
       if (!session) throw new AuthenticationError('User not logged in.')
       const { PAYPAL_CLIENT_ID } = process.env
       return PAYPAL_CLIENT_ID || 'sb'
+    },
+    validateBancolombiaTransfer: async (_, { transferCode }, { session }) => {
+      if (!session) throw new AuthenticationError('User not logged in')
+      const { response, error } =
+        await BancolombiaController.validateTransferCode({ transferCode })
+      if (error)
+        throw new GraphQLError(error.message, {
+          extensions: {
+            code: 'BANCOLOMBIA_SERVER_ERROR',
+            http: { status: error.statusCode }
+          }
+        })
+      return response
     }
   },
   Mutation: {
@@ -203,6 +217,70 @@ const resolvers = {
           }
         )
       }
+    },
+    createBancolombiaTransfer: async (
+      _,
+      {
+        orderData: {
+          commerceTransferButtonId,
+          transferReference,
+          transferDescription
+        }
+      },
+      { session, cache }
+    ) => {
+      if (!session) throw new AuthenticationError('User not logged in')
+      const currentOrder = await Order.findById(transferReference)
+      if (!currentOrder) throw new ApolloError('Order not found', 'NOT_FOUND')
+      if (currentOrder.paymentMethod !== PAYMENT_METHOD.BOTON_BANCOLOMBIA)
+        throw new ApolloError(
+          'The payment method of the order is different from the current operation',
+          'PAYMENT_METHOD_MISMATCH'
+        )
+      if (currentOrder.isPaid)
+        throw new ApolloError(
+          'The order has already been paid',
+          'ORDER_ALREADY_PAID'
+        )
+      if (cache.has(transferReference)) {
+        const cachedResponse = cache.get(transferReference)
+        const { transferCode } = cachedResponse.data[0]
+        const { response } = await BancolombiaController.validateTransferCode({
+          transferCode
+        })
+        if (
+          response?.data[0]?.transferState !==
+          BANCOLOMBIA_TRANSFER_STATES.rejected
+        ) {
+          return cachedResponse
+        } else {
+          cache.delete(transferReference)
+        }
+      }
+      const { HASH_BANCOLOMBIA_BUTTON, BRAND_NAME } = process.env
+      const shouldAddShipmentToTransfer =
+        currentOrder.shippingInfo?.deliveryCompany &&
+        !currentOrder.shippingInfo?.isCashOnDelivery
+      const { response, error } = await BancolombiaController.transferRegistry({
+        commerceTransferButtonId:
+          commerceTransferButtonId || HASH_BANCOLOMBIA_BUTTON,
+        transferReference: String(currentOrder._id),
+        transferAmount: shouldAddShipmentToTransfer
+          ? currentOrder.totalPrice
+          : currentOrder.itemsPrice,
+        transferDescription:
+          transferDescription ||
+          `Compra realizada en ${BRAND_NAME} para la adquisición de productos Kawaii!`
+      })
+      if (error)
+        throw new GraphQLError(error.message, {
+          extensions: {
+            code: 'BANCOLOMBIA_SERVER_ERROR',
+            http: { status: error.statusCode }
+          }
+        })
+      cache.set(transferReference, response)
+      return response
     }
   }
 }

@@ -92,9 +92,24 @@ const typeDefs = gql`
     deliveryCompany: String
   }
 
+  type BancolombiaValidationResponse {
+    meta: BancolombiaMetaData!
+    data: [BancolombiaTransferValidationData!]!
+  }
+
+  type BancolombiaTransferValidationData {
+    header: TransferHeader!
+    transferState: String!
+    transferReference: String!
+    transferAmount: Float!
+  }
+
   type Query {
     getOrderById(id: ID!): Order
     paypalClientId: String!
+    validateBancolombiaTransfer(
+      transferCode: String!
+    ): BancolombiaValidationResponse!
   }
 
   type Preference {
@@ -120,9 +135,39 @@ const typeDefs = gql`
     links: [PayPalLink!]
   }
 
-  input capturePaymentInput {
+  input CapturePaymentInput {
     paypalOrderId: ID!
     orderId: ID!
+  }
+
+  input TransferRegistryInput {
+    commerceTransferButtonId: String
+    transferReference: ID!
+    transferDescription: String
+  }
+
+  type BancolombiaMetaData {
+    _messageId: ID!
+    _version: String!
+    _requestDate: String!
+    _responseSize: Int!
+    _clientRequest: String!
+  }
+
+  type TransferHeader {
+    type: String!
+    id: ID!
+  }
+
+  type BancolombiaTransferData {
+    header: TransferHeader!
+    transferCode: String!
+    redirectURL: String!
+  }
+
+  type TransferRegistryResponse {
+    meta: BancolombiaMetaData!
+    data: [BancolombiaTransferData!]!
   }
 
   type Mutation {
@@ -137,7 +182,10 @@ const typeDefs = gql`
     ): Order!
     newPreference(storeOrderId: ID!): Preference
     createPayPalOrder(orderData: PayPalOrderInput!): PayPalOrder
-    capturePayPalPayment(paymentData: capturePaymentInput!): Order
+    capturePayPalPayment(paymentData: CapturePaymentInput!): Order
+    createBancolombiaTransfer(
+      orderData: TransferRegistryInput!
+    ): TransferRegistryResponse!
   }
 `
 export default typeDefs

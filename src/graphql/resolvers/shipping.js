@@ -27,15 +27,12 @@ const resolvers = {
   Query: {
     getLocations: async (_, { locationCode }, { session }) => {
       if (!session) throw new AuthenticationError('User not logged in.')
-      try {
-        const { data, error } = await getLocations(locationCode)
-        if (error) throw new GraphQLError(error.message)
-        return data
-      } catch (error) {
+      const { data, error } = await getLocations(locationCode)
+      if (error)
         throw new GraphQLError(error.message, {
           extensions: { code: 'INTERNAL_SERVER_ERROR' }
         })
-      }
+      return data
     },
     getSendings: async (_, { input = {} }, { session }) => {
       if (!session) throw new AuthenticationError('User not logged in.')

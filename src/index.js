@@ -9,6 +9,7 @@ import express from 'express'
 import http from 'http'
 import { getSession } from 'next-auth/react'
 import db from '../src/db/index.js'
+import Bancolombia from './controllers/bancolombia-webhook.js'
 import MercadoPago from './controllers/mercadopago-webhook.js'
 import MiPaqueteController from './controllers/mipaquete-controller.js'
 import Paypal from './controllers/paypal-webhook.js'
@@ -24,13 +25,28 @@ async function main() {
   const app = express()
   const httpServer = http.createServer(app)
   const schema = makeExecutableSchema({ typeDefs, resolvers })
+  const customCache = {
+    cacheMap: new Map(),
+    get: function (key) {
+      return this.cacheMap.get(key)
+    },
+    set: function (key, value) {
+      return this.cacheMap.set(key, value)
+    },
+    has: function (key) {
+      return this.cacheMap.has(key)
+    },
+    delete: function (key) {
+      return this.cacheMap.delete(key)
+    }
+  }
   const server = new ApolloServer({
     schema,
     csrfPrevention: true,
     cache: 'bounded',
     context: async ({ req, res }) => {
       const session = await getSession({ req })
-      return { session, mercadopago }
+      return { session, mercadopago, cache: customCache }
     },
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
@@ -65,6 +81,12 @@ async function main() {
     '/webhooks/mipaquete-guides',
     express.json(),
     MiPaqueteController.guidesWebhookController
+  )
+
+  app.post(
+    '/webhooks/bancolombia',
+    express.json(),
+    Bancolombia.webhookController
   )
 
   await new Promise((resolve) => httpServer.listen({ port: 4000 }, resolve))
