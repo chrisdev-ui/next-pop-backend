@@ -110,6 +110,7 @@ const typeDefs = gql`
     validateBancolombiaTransfer(
       transferCode: String!
     ): BancolombiaValidationResponse!
+    getOrdersHistory: [Order!]!
   }
 
   type Preference {

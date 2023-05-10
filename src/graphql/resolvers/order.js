@@ -55,6 +55,23 @@ const resolvers = {
           }
         })
       return response
+    },
+    getOrdersHistory: async (_, __, { session }) => {
+      if (!session) throw new AuthenticationError('User not logged in')
+      const {
+        user: { _id: userId, isAdmin }
+      } = session || {}
+      const user = {}
+      if (!isAdmin) user.user = userId
+      try {
+        const orders = await Order.find(user)
+        return orders
+      } catch (error) {
+        throw new GraphQLError(error.message, {
+          extensions: { code: 'ERROR_CONNECTING_TO_DATABASE' },
+          http: { status: 500 }
+        })
+      }
     }
   },
   Mutation: {
