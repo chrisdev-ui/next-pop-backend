@@ -8,8 +8,15 @@ import { BANCOLOMBIA_TRANSFER_STATES, PAYMENT_METHOD } from '../../config.js'
 import BancolombiaController from '../../controllers/bancolombia-controller.js'
 import capturePayment from '../../controllers/capture-paypal-order.js'
 import createOrder from '../../controllers/create-paypal-order.js'
+import MiPaqueteController from '../../controllers/mipaquete-controller.js'
 import Order from '../../db/models/Order.js'
+import Shipment from '../../db/models/Shipment.js'
+import User from '../../db/models/User.js'
 import generateOrderNumber from '../utils/generate-order-number.js'
+import {
+  createShipmentItem,
+  validateIfUserWantSending
+} from '../utils/sendings.js'
 
 const resolvers = {
   Query: {
@@ -208,6 +215,42 @@ const resolvers = {
           throw new GraphQLError('Order is already paid or does not exist', {
             extensions: { code: 'INTERNAL_SERVER_ERROR' }
           })
+        if (paidOrder.isPaid) {
+          const currentUser = await User.findById(currentOrder.user)
+          if (validateIfUserWantSending(paidOrder)) {
+            const shipment = createShipmentItem(paidOrder, currentUser)
+            const newShipping = new Shipment({ ...shipment })
+            const sendingInput = {
+              sender: newShipping.sender,
+              receiver: newShipping.receiver,
+              productInformation: newShipping.productInformation,
+              locate: newShipping.locate,
+              channel: newShipping.channel,
+              ...(newShipping.user && { user: newShipping.user }),
+              deliveryCompany: newShipping.deliveryCompany,
+              ...(newShipping.description && {
+                description: newShipping.description
+              }),
+              ...(newShipping.comments && { comments: newShipping.comments }),
+              paymentType: newShipping.paymentType,
+              valueCollection: newShipping.valueCollection,
+              requestPickup: newShipping.requestPickup,
+              adminTransactionData: newShipping.adminTransactionData
+            }
+            const { data, error } = await MiPaqueteController.createSending(
+              sendingInput
+            )
+            if (error) {
+              newShipping.status = error.message
+              await newShipping.save()
+            } else {
+              const { mpCode, message } = data
+              newShipping.trackingNumber = mpCode
+              newShipping.status = message
+              await newShipping.save()
+            }
+          }
+        }
         return paidOrder
       } catch (error) {
         throw new GraphQLError(
